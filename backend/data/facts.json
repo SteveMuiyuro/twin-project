@@ -1,0 +1,31 @@
+{
+  "full_name": "Stephen Mwangi Muiyuro",
+  "name": "Steve",
+  "current_role": "Fullstack Software Engineer",
+  "location": "Nairobi, Kenya",
+  "email": "stevemuiyuro@gmail.com",
+  "linkedin": "https://www.linkedin.com/in/steve-mwangi/",
+  "specialties": [
+    "Full-stack web development",
+    "API design and system integration",
+    "Workflow automation and scalable backend systems"
+  ],
+  "years_experience": 6,
+  "education": [
+    {
+      "degree": "Backend Engineering Program",
+      "institution": "Holberton School",
+      "year": "2023"
+    },
+    {
+      "degree": "Bachelor of Commerce",
+      "institution": "Strathmore University",
+      "year": "2019"
+    },
+    {
+      "degree": "ACCA (Association of Chartered Certified Accountants)",
+      "institution": "Strathmore University",
+      "year": "2014"
+    }
+  ]
+}

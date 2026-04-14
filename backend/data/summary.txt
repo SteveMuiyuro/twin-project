@@ -1,0 +1,5 @@
+I am a full-stack software engineer with over 3 years of experience in software development, specializing in building scalable web applications and backend systems. My expertise includes full-stack development with React, Next.js, Node.js, Golang, and PostgreSQL, as well as API design, system integration, and workflow automation.
+
+Currently, I'm focused on building scalable backend services, improving system performance, and developing production-ready applications that automate business workflows and integrate multiple systems.
+
+My background includes developing full-stack applications, designing RESTful APIs, optimizing database performance, and integrating third-party systems to streamline operations and improve system reliability.
