@@ -35,6 +35,10 @@ resource "google_artifact_registry_repository" "backend_repo" {
   repository_id = "${var.project_name}-${var.environment}-repo"
   description   = "Docker repository for backend"
   format        = "DOCKER"
+
+  depends_on = [
+    google_project_service.artifact_registry_api
+  ]
 }
 
 ############################################
@@ -51,6 +55,10 @@ resource "google_storage_bucket" "frontend_bucket" {
     main_page_suffix = "index.html"
     not_found_page   = "404.html"
   }
+
+  depends_on = [
+    google_project_service.storage_api
+  ]
 }
 
 resource "google_storage_bucket_iam_member" "frontend_public" {
@@ -68,6 +76,10 @@ resource "google_storage_bucket" "memory_bucket" {
   location = var.region
 
   uniform_bucket_level_access = true
+
+  depends_on = [
+    google_project_service.storage_api
+  ]
 }
 
 ############################################
@@ -99,10 +111,18 @@ resource "google_cloud_run_service" "backend" {
   location = var.region
 
   template {
+
+    metadata {
+      annotations = {
+        "run.googleapis.com/client-name" = "terraform"
+      }
+    }
+
     spec {
       service_account_name = google_service_account.cloud_run_sa.email
 
       containers {
+
         image = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.backend_repo.repository_id}/twin-backend:latest"
 
         ports {
@@ -133,7 +153,8 @@ resource "google_cloud_run_service" "backend" {
   }
 
   depends_on = [
-    google_project_service.run_api
+    google_project_service.run_api,
+    google_artifact_registry_repository.backend_repo
   ]
 }
 

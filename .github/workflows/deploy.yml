@@ -41,8 +41,21 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init -input=false
+
+      - name: Terraform Plan
+        run: |
+          cd terraform
+          terraform plan -input=false
+        env:
+          TF_VAR_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+
       - name: Terraform Apply
         run: |
           cd terraform
-          terraform init
-          terraform apply -auto-approve -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}"
+          terraform apply -auto-approve -input=false
+        env:
+          TF_VAR_openai_api_key: ${{ secrets.OPENAI_API_KEY }}

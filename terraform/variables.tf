@@ -23,7 +23,7 @@ variable "region" {
 }
 
 variable "openai_api_key" {
-  description = "OpenAI API key"
+  description = "OpenAI API key used by the backend"
   type        = string
   sensitive   = true
 }
