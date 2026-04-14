@@ -1,0 +1,48 @@
+name: Deploy Digital Twin
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: twin-project-51053
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build Docker image
+        run: |
+          cd backend
+          docker build -t us-central1-docker.pkg.dev/twin-project-51053/twin-dev-repo/twin-backend:latest .
+
+      - name: Push Docker image
+        run: |
+          docker push us-central1-docker.pkg.dev/twin-project-51053/twin-dev-repo/twin-backend:latest
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Apply
+        run: |
+          cd terraform
+          terraform init
+          terraform apply -auto-approve -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}"
