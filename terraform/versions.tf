@@ -1,20 +1,25 @@
 terraform {
   required_version = ">= 1.0"
 
-  backend "gcs" {
-    bucket  = "twin-terraform-state-51053"
-    prefix  = "terraform/state"
-  }
-
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "~> 5.0"
+      version = "~> 4.70"
+    }
+
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = "~> 4.70"
     }
   }
 }
 
 provider "google" {
-  project = "twin-project-51053"
-  region  = "us-central1"
+  project = var.project_id
+  region  = var.region
+}
+
+provider "google-beta" {
+  project = var.project_id
+  region  = var.region
 }

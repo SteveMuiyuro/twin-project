@@ -97,7 +97,7 @@ resource "google_storage_bucket_object" "function_archive" {
 }
 
 ############################################
-# Cloud Function
+# Cloud Function (Lambda equivalent)
 ############################################
 
 resource "google_cloudfunctions2_function" "backend" {
@@ -134,29 +134,45 @@ resource "google_cloudfunctions2_function" "backend" {
 }
 
 ############################################
-# API Gateway
+# Make function public (VERY IMPORTANT)
+############################################
+
+resource "google_cloudfunctions2_function_iam_member" "invoker" {
+  project        = var.project_id
+  location       = var.region
+  cloud_function = google_cloudfunctions2_function.backend.name
+
+  role   = "roles/cloudfunctions.invoker"
+  member = "allUsers"
+}
+
+############################################
+# API Gateway (USES google-beta)
 ############################################
 
 resource "google_api_gateway_api" "api" {
-  api_id = "${var.project_name}-api"
+  provider = google-beta
+  api_id   = "${var.project_name}-api"
 }
 
 resource "google_api_gateway_api_config" "api_config" {
-  api      = google_api_gateway_api.api.api_id
+  provider      = google-beta
+  api           = google_api_gateway_api.api.api_id
   api_config_id = "v1"
 
   openapi_documents {
     document {
-      path = "openapi.yaml"
+      path     = "openapi.yaml"
       contents = base64encode(file("${path.module}/openapi.yaml"))
     }
   }
 }
 
 resource "google_api_gateway_gateway" "gateway" {
+  provider   = google-beta
   api_config = google_api_gateway_api_config.api_config.id
   gateway_id = "${var.project_name}-gateway"
-  location   = var.region
+  region     = var.region
 }
 
 ############################################
