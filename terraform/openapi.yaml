@@ -1,0 +1,14 @@
+swagger: "2.0"
+info:
+  title: twin-api
+  version: 1.0.0
+
+paths:
+  /chat:
+    post:
+      operationId: chat
+      x-google-backend:
+        address: REPLACE_WITH_FUNCTION_URL
+      responses:
+        "200":
+          description: OK
