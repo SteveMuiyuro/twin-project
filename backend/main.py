@@ -1,43 +1,78 @@
-import json
+import functions_framework
 import os
-from resources import get_response  # assuming your logic is here
+import json
+import uuid
+from datetime import datetime
+from typing import List, Dict
+
+from context import prompt
+
+# Memory directory
+MEMORY_DIR = "./memory"
 
 
+def get_memory_path(session_id: str) -> str:
+    return f"{session_id}.json"
+
+
+def load_conversation(session_id: str) -> List[Dict]:
+    file_path = os.path.join(MEMORY_DIR, get_memory_path(session_id))
+
+    if os.path.exists(file_path):
+        with open(file_path, "r") as f:
+            return json.load(f)
+
+    return []
+
+
+def save_conversation(session_id: str, messages: List[Dict]):
+    os.makedirs(MEMORY_DIR, exist_ok=True)
+
+    file_path = os.path.join(MEMORY_DIR, get_memory_path(session_id))
+
+    with open(file_path, "w") as f:
+        json.dump(messages, f, indent=2)
+
+
+@functions_framework.http
 def chat(request):
-    """HTTP Cloud Function entry point"""
+    try:
+        data = request.get_json()
+        user_message = data.get("message", "")
+        session_id = data.get("session_id") or str(uuid.uuid4())
 
-    # Handle CORS (important for frontend)
-    if request.method == "OPTIONS":
-        return ("", 204, {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
-            "Access-Control-Allow-Headers": "Content-Type",
+        conversation = load_conversation(session_id)
+
+        # Build messages
+        messages = [{"role": "system", "content": prompt()}]
+
+        for msg in conversation[-10:]:
+            messages.append({"role": msg["role"], "content": msg["content"]})
+
+        messages.append({"role": "user", "content": user_message})
+
+        # 🔥 TEMP RESPONSE (we plug Vertex AI next)
+        assistant_response = f"Echo: {user_message}"
+
+        # Save conversation
+        conversation.append({
+            "role": "user",
+            "content": user_message,
+            "timestamp": datetime.now().isoformat()
         })
 
-    try:
-        request_json = request.get_json()
+        conversation.append({
+            "role": "assistant",
+            "content": assistant_response,
+            "timestamp": datetime.now().isoformat()
+        })
 
-        message = request_json.get("message")
-        session_id = request_json.get("session_id")
+        save_conversation(session_id, conversation)
 
-        # Call your existing logic
-        response_text, session_id = get_response(message, session_id)
-
-        return (
-            json.dumps({
-                "response": response_text,
-                "session_id": session_id
-            }),
-            200,
-            {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*"
-            }
-        )
+        return {
+            "response": assistant_response,
+            "session_id": session_id
+        }
 
     except Exception as e:
-        return (
-            json.dumps({"error": str(e)}),
-            500,
-            {"Access-Control-Allow-Origin": "*"}
-        )
+        return {"error": str(e)}, 500

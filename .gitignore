@@ -31,3 +31,6 @@ memory/
 # Docker
 *.tar
 *.gz
+
+backend/function.zip
+*.zip
