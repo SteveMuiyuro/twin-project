@@ -110,9 +110,9 @@ jobs:
       # 🔥 TEST: Cloud Function
       # ----------------------------
 
-      - name: Test Cloud Function directly (Lambda equivalent)
+      - name: Test Cloud Function 
         run: |
-          echo "Testing Cloud Function directly..."
+          echo "Testing Cloud Function..."
 
           curl -X POST $FUNCTION_URL \
             -H "Content-Type: application/json" \
