@@ -4,3 +4,6 @@ openai
 python-dotenv
 python-multipart
 pypdf
+google-cloud-storage
+google-cloud-aiplatform
+pypdf
