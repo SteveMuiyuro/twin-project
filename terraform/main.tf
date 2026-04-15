@@ -1,3 +1,11 @@
+terraform {
+  backend "gcs" {
+    bucket  = "twin-terraform-state-51053-001"
+    prefix  = "terraform/state"
+  }
+}
+
+
 ############################################
 # Enable required APIs
 ############################################
