@@ -105,7 +105,7 @@ resource "google_storage_bucket_object" "function_archive" {
 ############################################
 
 resource "google_cloudfunctions2_function" "backend" {
-  name        = "${var.project_name}-backend-v2"
+  name        = "${var.project_name}-backend-v3"
   location    = var.region
   description = "Digital Twin API"
 
