@@ -1,78 +1,48 @@
 import functions_framework
-import os
-import json
 import uuid
-from datetime import datetime
-from typing import List, Dict
 
-from context import prompt
-
-# Memory directory
-MEMORY_DIR = "./memory"
-
-
-def get_memory_path(session_id: str) -> str:
-    return f"{session_id}.json"
-
-
-def load_conversation(session_id: str) -> List[Dict]:
-    file_path = os.path.join(MEMORY_DIR, get_memory_path(session_id))
-
-    if os.path.exists(file_path):
-        with open(file_path, "r") as f:
-            return json.load(f)
-
-    return []
-
-
-def save_conversation(session_id: str, messages: List[Dict]):
-    os.makedirs(MEMORY_DIR, exist_ok=True)
-
-    file_path = os.path.join(MEMORY_DIR, get_memory_path(session_id))
-
-    with open(file_path, "w") as f:
-        json.dump(messages, f, indent=2)
+from resources import get_response
 
 
 @functions_framework.http
 def chat(request):
+    # ✅ Handle CORS preflight
+    if request.method == "OPTIONS":
+        return ("", 204, {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
+        })
+
     try:
-        data = request.get_json()
-        user_message = data.get("message", "")
-        session_id = data.get("session_id") or str(uuid.uuid4())
+        request_json = request.get_json(silent=True) or {}
 
-        conversation = load_conversation(session_id)
+        message = request_json.get("message", "")
+        session_id = request_json.get("session_id") or str(uuid.uuid4())
 
-        # Build messages
-        messages = [{"role": "system", "content": prompt()}]
+        if not message:
+            return (
+                {"error": "Message is required"},
+                400,
+                {"Access-Control-Allow-Origin": "*"}
+            )
 
-        for msg in conversation[-10:]:
-            messages.append({"role": msg["role"], "content": msg["content"]})
+        reply, session_id = get_response(message, session_id)
 
-        messages.append({"role": "user", "content": user_message})
-
-        # 🔥 TEMP RESPONSE (we plug Vertex AI next)
-        assistant_response = f"Echo: {user_message}"
-
-        # Save conversation
-        conversation.append({
-            "role": "user",
-            "content": user_message,
-            "timestamp": datetime.now().isoformat()
-        })
-
-        conversation.append({
-            "role": "assistant",
-            "content": assistant_response,
-            "timestamp": datetime.now().isoformat()
-        })
-
-        save_conversation(session_id, conversation)
-
-        return {
-            "response": assistant_response,
-            "session_id": session_id
-        }
+        return (
+            {
+                "response": reply,
+                "session_id": session_id
+            },
+            200,
+            {
+                "Access-Control-Allow-Origin": "*"
+            }
+        )
 
     except Exception as e:
-        return {"error": str(e)}, 500
+        return (
+            {"error": str(e)},
+            500,
+            {"Access-Control-Allow-Origin": "*"}
+        )

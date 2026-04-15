@@ -1,7 +1,6 @@
 functions-framework==3.9.1
-
-python-dotenv
-pypdf
-
-google-cloud-storage
 google-cloud-aiplatform
+google-cloud-storage
+pypdf
+python-dotenv
+requests
