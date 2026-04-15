@@ -1,0 +1,141 @@
+name: Deploy Digital Twin (GCP - Full Pipeline)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    env:
+      PROJECT_ID: twin-project-51053
+      REGION: us-central1
+
+    steps:
+      # ----------------------------
+      # Checkout
+      # ----------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ----------------------------
+      # Authenticate to GCP
+      # ----------------------------
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      # ----------------------------
+      # Setup Node + Build frontend
+      # ----------------------------
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      # ----------------------------
+      # Setup Terraform
+      # ----------------------------
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init -input=false
+
+      - name: Terraform Apply
+        run: |
+          cd terraform
+          terraform apply -auto-approve -input=false
+        env:
+          TF_VAR_gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+
+      # ----------------------------
+      # Capture Terraform Outputs
+      # ----------------------------
+      - name: Capture Outputs
+        run: |
+          cd terraform
+          echo "API_URL=$(terraform output -raw api_url)" >> $GITHUB_ENV
+          echo "BUCKET=$(terraform output -raw frontend_bucket)" >> $GITHUB_ENV
+          echo "CDN_IP=$(terraform output -raw cdn_ip)" >> $GITHUB_ENV
+
+      # ----------------------------
+      # Upload frontend to GCS
+      # ----------------------------
+      - name: Upload frontend
+        run: |
+          gsutil -m rsync -r frontend/out gs://$BUCKET
+
+      # ----------------------------
+      # Invalidate CDN cache
+      # ----------------------------
+      - name: Invalidate CDN cache
+        run: |
+          gcloud compute url-maps invalidate-cdn-cache twin-url-map --path "/*"
+
+      # ----------------------------
+      # 🔥 TRACE: API → Function → Vertex AI
+      # ----------------------------
+      - name: Test API Gateway (Gemini Flow)
+        run: |
+          echo "Testing API Gateway → Cloud Function → Vertex AI..."
+
+          RESPONSE=$(curl -s -X POST https://$API_URL/chat \
+            -H "Content-Type: application/json" \
+            -d '{"message": "In one sentence, what model are you?"}')
+
+          echo "API RESPONSE:"
+          echo "$RESPONSE"
+
+      # ----------------------------
+      # 🔥 TRACE: Fetch logs (Vertex AI proof)
+      # ----------------------------
+      - name: Fetch Cloud Logs (Vertex AI trace)
+        run: |
+          echo "Fetching Cloud Function logs..."
+          gcloud logging read \
+            'resource.type="cloud_run_revision" AND textPayload:"Vertex AI"' \
+            --limit=10 \
+            --format="value(textPayload)"
+
+      # ----------------------------
+      # 🔥 TRACE: CDN check
+      # ----------------------------
+      - name: Test CDN frontend
+        run: |
+          echo "Testing CDN..."
+          curl -I http://$CDN_IP
+
+      # ----------------------------
+      # Architecture Summary
+      # ----------------------------
+      - name: Deployment Summary
+        run: |
+          echo "🚀 Deployment Complete"
+          echo "-----------------------------------"
+          echo "API Gateway: https://$API_URL/chat"
+          echo "Frontend CDN: http://$CDN_IP"
+          echo ""
+          echo "Architecture:"
+          echo "Client → CDN → Frontend (GCS)"
+          echo "Client → API Gateway → Cloud Function → Vertex AI (Gemini)"
+          echo "-----------------------------------"
