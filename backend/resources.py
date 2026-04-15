@@ -122,6 +122,7 @@ def load_memory(session_id):
 import requests
 
 API_KEY = os.getenv("GEMINI_API_KEY")
+print("API KEY:", API_KEY)
 
 def get_response(message, session_id=None):
     session_id = session_id or "default-session"
