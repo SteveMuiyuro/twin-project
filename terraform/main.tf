@@ -240,3 +240,7 @@ output "frontend_bucket" {
 output "cdn_ip" {
   value = google_compute_global_address.frontend_ip.address
 }
+
+output "function_url" {
+  value = google_cloudfunctions2_function.backend.service_config[0].uri
+}
