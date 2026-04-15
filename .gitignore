@@ -28,3 +28,6 @@ memory/
 # Logs
 *.log
 
+# Docker
+*.tar
+*.gz
