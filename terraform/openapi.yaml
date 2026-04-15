@@ -3,6 +3,8 @@ info:
   title: twin-api
   version: 1.0.0
 
+security: []   # 👈 THIS LINE FIXES THE 403
+
 paths:
   /chat:
     post:
