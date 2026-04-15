@@ -10,5 +10,13 @@ paths:
       x-google-backend:
         address: REPLACE_WITH_FUNCTION_URL
       responses:
-        "200":
+        200:
           description: OK
+
+    options:
+      operationId: corsChat
+      x-google-backend:
+        address: REPLACE_WITH_FUNCTION_URL
+      responses:
+        200:
+          description: CORS support

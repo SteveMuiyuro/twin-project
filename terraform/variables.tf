@@ -21,9 +21,8 @@ variable "region" {
   type        = string
   default     = "us-central1"
 }
-
-variable "openai_api_key" {
-  description = "OpenAI API key used by the backend"
+variable "gemini_api_key" {
+  description = "Gemini API key for Vertex AI"
   type        = string
   sensitive   = true
 }
