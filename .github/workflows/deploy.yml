@@ -86,6 +86,10 @@ jobs:
         run: |
           gsutil -m rsync -r frontend/out gs://$BUCKET
 
+      - name: Create env file
+        run: |
+          echo "NEXT_PUBLIC_API_URL=https://twin-gateway-2rx5k7kr.uc.gateway.dev" > frontend/.env.production
+
       # ----------------------------
       # Invalidate CDN cache
       # ----------------------------
